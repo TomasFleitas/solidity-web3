@@ -11,14 +11,11 @@ import rootSagas from "./sagas";
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: [
-    //acá meto el que quiero que no persiste
-  ],
+  blacklist: [],
 };
 
-const config = {
-  whitelist: [],
-};
+/*   whitelist:[] solo los types habilitados, si esta [] filtra todos */
+const config = {};
 
 const history = createBrowserHistory();
 
@@ -32,6 +29,7 @@ middleware.push(createStateSyncMiddleware(config));
 const persistedReducer = persistReducer(persistConfig, rootReducers(history));
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+
 const store = createStore(
   withReduxStateSync(persistedReducer),
   undefined,

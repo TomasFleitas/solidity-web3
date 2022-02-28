@@ -1,0 +1,10 @@
+.count_down {
+  margin-top: auto;
+  display: flex;
+  flex-direction: row;
+  > .seconds {
+    width: 70px;
+    text-align: center;
+    color: black !important;
+  }
+}

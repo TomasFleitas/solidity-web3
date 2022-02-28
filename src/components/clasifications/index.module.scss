@@ -1,0 +1,15 @@
+.clasifications {
+  height: 98%;
+  overflow: hidden auto;
+  background-color: red;
+  .clasifications_head,
+  .clasifications_item {
+    height: fit-content;
+    margin: 5px;
+    padding: 5px;
+  }
+  
+  .clasifications_item {
+    background-color: yellow;
+  }
+}

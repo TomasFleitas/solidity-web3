@@ -9,6 +9,15 @@ module.exports = {
         use: "ts-loader",
         exclude: /node_modules/,
       },
+      {
+        test: /\.html$/,
+        use: {
+          loader: "html-loader",
+          options: {
+            attrs: [":data-src"],
+          },
+        },
+      },
     ],
   },
   resolve: {

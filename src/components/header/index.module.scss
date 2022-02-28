@@ -1,0 +1,15 @@
+.header {
+  display: flex;
+  width: 100%;
+  height: fit-content;
+  justify-content: space-between;
+  padding: 10px;
+
+  .account {
+    margin: 0;
+    cursor: pointer;
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+}
