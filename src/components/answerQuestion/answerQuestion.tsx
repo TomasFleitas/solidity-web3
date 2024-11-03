@@ -14,6 +14,7 @@ const AnswerQuestion = () => {
   const [answeredCount, setansweredCount] = useState<number>();
   const [finish, setFinish] = useState(false);
   const [stop, setStop] = useState<boolean>(false);
+  const [ANSWER_QUESTION_LOSS, setWrongQuestion] = useState<any>(0);
 
   useEffect(() => {
     if (!contract) return;
@@ -47,6 +48,7 @@ const AnswerQuestion = () => {
         setStop(false);
         currentQuestion && getNextQuestion(currentQuestion?.id + 1);
       } catch (error) {
+        setStop(false);
         console.log(error);
       }
     },

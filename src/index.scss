@@ -6,8 +6,12 @@
   height: 100%;
   overflow: hidden auto;
   display: flex;
-  *{
+  background-color: var(--secondary-color);
+  * {
     color: white;
+  }
+  path{
+    color: black;
   }
 }
 
@@ -17,6 +21,6 @@
   --shadow: 5px 0px 10px rgba(0, 0, 0, 0.5);
 }
 
-.ant-tabs-content-top{
+.ant-tabs-content-top {
   height: 100%;
 }

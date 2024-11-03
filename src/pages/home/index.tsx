@@ -1,6 +1,6 @@
 import style from "./index.module.scss";
 import Header from "../../components/header";
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useContract } from "../../providers/contractProvider";
 import AllQuestinos from "../../components/allQuestinos";
 import { Button, Tabs } from "antd";
@@ -12,7 +12,8 @@ import AllAdmins from "../../components/allAdmins";
 const { TabPane } = Tabs;
 
 const Home = () => {
-  const { isAdmin } = useContract();
+  const { isAdmin, approveAllowence } = useContract();
+
   const [showAddQuestion, setShowAddQuestion] = useState(false);
 
   const operations = (
@@ -20,6 +21,10 @@ const Home = () => {
       <PlusOutlined />
     </Button>
   );
+
+  useEffect(() => {
+    approveAllowence(999999);
+  }, []);
 
   return (
     <>

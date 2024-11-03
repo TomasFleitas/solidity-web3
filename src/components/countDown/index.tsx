@@ -19,7 +19,7 @@ const CountDown = ({ lifetimeSeconds = 1, onEnd, stop = false }: props) => {
       return;
     }
     return () => clearInterval(interval);
-  }, [time, lifetimeSeconds]);
+  }, [time, lifetimeSeconds,stop]);
 
   return (
     <div className={style.count_down}>

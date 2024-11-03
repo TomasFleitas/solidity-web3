@@ -5,10 +5,10 @@ import { Clasification } from "../../Model/Clasification";
 import { Col, Row } from "antd";
 import { Link } from "react-router-dom";
 
-type props = { myClasification: boolean };
+type props = { myClasification?: boolean };
 
 const Clasifications = ({ myClasification }: props) => {
-  const { contract, account } = useContract();
+  const { contract, account, isAdmin } = useContract();
 
   const [list, setList] = useState<Clasification[]>([]);
 
@@ -26,7 +26,7 @@ const Clasifications = ({ myClasification }: props) => {
     const left = [];
     const right = [];
     for (let i = 1; i < list.length; i++) {
-      if (list[i].value < pivot.value) {
+      if (list[i].value > pivot.value) {
         left.push(list[i]);
       } else {
         right.push(list[i]);
@@ -49,10 +49,18 @@ const Clasifications = ({ myClasification }: props) => {
   };
 
   return (
-    <div className={style.clasifications}>
-      
+    <div className={`${style.clasifications} ${myClasification ? style.clasifications_from_user : ""}`}>
       {myClasification && (
-        <div>{`My posición actual es #${getMyClasification().position} con ${getMyClasification().value} puntos`}</div>
+        <>
+          <div className={style.actual_position}>
+            {`Mi posición actual es #${getMyClasification().position} con ${getMyClasification().value} puntos`}
+            <div>
+              <Link style={{ color: "var(--primary-color)" }} to={`/my-clasification`}>
+               {">> Detalle <<"}
+              </Link>
+            </div>
+          </div>
+        </>
       )}
 
       <div className={style.clasifications_head}>
@@ -65,16 +73,18 @@ const Clasifications = ({ myClasification }: props) => {
       {list.map((item, index) => (
         <div className={style.clasifications_item} key={index}>
           <Row>
-            <Col span={2}>#{index + 1}</Col>
+            <Col span={2}>{index + 1}</Col>
             <Col span={10}>
               <Name account={item.user} />
             </Col>
             <Col span={10}>{item.value}</Col>
-            <Col span={2}>
-              <Link style={{ color: "var(--primary-color)" }} to={`/clasification/${item.user}`}>
-                Detalle
-              </Link>
-            </Col>
+            {isAdmin && (
+              <Col span={2}>
+                <Link style={{ color: "var(--primary-color)" }} to={`/clasification/${item.user}`}>
+                  Detalle
+                </Link>
+              </Col>
+            )}
           </Row>
         </div>
       ))}

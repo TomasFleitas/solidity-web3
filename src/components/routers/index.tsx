@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Home, NotFound } from "../../pages";
 import Login from "../../pages/login";
+import AnswersDetail from "../answersDetail";
 import Clasifications from "../clasifications";
 import Security from "../security";
 
@@ -11,7 +12,8 @@ const Routers = () => {
         <Route path="/" element={<Security direction="forward" />}>
           <Route path="/" element={<Home />} />
           <Route path="/clasification" element={<Clasifications myClasification />} />
-          <Route path="/clasification/:user" element={<></>} />
+          <Route path="/clasification/:user" element={<AnswersDetail />} />
+          <Route path="/my-clasification" element={<AnswersDetail />} />
         </Route>
 
         <Route path="/login" element={<Security direction="backward" />}>

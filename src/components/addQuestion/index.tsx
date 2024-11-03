@@ -20,7 +20,8 @@ const AddQuestion = ({ show, onClose }: props) => {
   const [form] = Form.useForm();
   const [tags, setTags] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const { contract } = useContract();
+  const { contract, isOnwer, balance, coinName, coinSymbol } = useContract();
+  const [CREATE_QUESTION_COST, setCreateQuestionCost] = useState<any>();
   const { openSuccessNotification, openErrorNotification } = useNotification();
 
   const handleDelete = (i: number) => {
@@ -42,8 +43,17 @@ const AddQuestion = ({ show, onClose }: props) => {
     setTags(newTags);
   };
 
+  useEffect(() => {
+    if (!contract) return;
+    contract.CREATE_QUESTION_COST().then((v: any) => setCreateQuestionCost(v));
+  }, [contract]);
+
   const addQuestion = useCallback(
     async v => {
+      if (!isOnwer && balance < CREATE_QUESTION_COST) {
+        openErrorNotification(`No tienes suficiente ${coinName} (${coinSymbol} ${CREATE_QUESTION_COST} requeridos)`);
+        return;
+      }
       if (tags.length === 0) {
         setErrorOptions(["Campo obligatorio"]);
         return;
@@ -61,11 +71,15 @@ const AddQuestion = ({ show, onClose }: props) => {
         onClose();
       } catch (error: any) {
         setLoading(false);
-        openErrorNotification("Error al agregar la pregunta");
+        openErrorNotification(
+          error.data.message.split("revert ")?.[1]?.match("Need more QUIZ_COIN")
+            ? `No tienes suficiente ${coinName} (${coinSymbol} ${CREATE_QUESTION_COST} requeridos)`
+            : "Error al agregar la pregunta"
+        );
         console.log(error.data.message.split("revert ")[1]);
       }
     },
-    [contract, tags]
+    [contract, tags, CREATE_QUESTION_COST, balance, isOnwer, coinSymbol, coinName]
   );
 
   useEffect(() => {
@@ -88,14 +102,20 @@ const AddQuestion = ({ show, onClose }: props) => {
           <Row>
             <Col span={24}>
               <Form.Item label="Pregunta" name="text" rules={[{ required: true, message: "Campo obligatorio" }]}>
-                <Input required placeholder="Pregunta" />
+                <Input.TextArea
+                  showCount
+                  maxLength={200}
+                  autoSize={{ minRows: 2, maxRows: 4 }}
+                  required
+                  placeholder="Pregunta"
+                />
               </Form.Item>
             </Col>
           </Row>
           <Row>
             <Col span={24}>
-              <Form.Item label="Url de Imagen" name="image">
-                <Input placeholder="URL de Imagen" />
+              <Form.Item rules={[{ type: "url", message: "Url de imagen" }]} label="Url de Imagen" name="image">
+                <Input type="url" placeholder="URL de Imagen" />
               </Form.Item>
             </Col>
           </Row>
@@ -110,6 +130,7 @@ const AddQuestion = ({ show, onClose }: props) => {
                 }
                 name="opts">
                 <ReactTags
+                  maxLength={100}
                   tags={tags}
                   delimiters={delimiters}
                   handleDelete={handleDelete}
@@ -125,7 +146,7 @@ const AddQuestion = ({ show, onClose }: props) => {
           <Row>
             <Col span={12}>
               <Form.Item
-                label="Tiempo para responder"
+                label="Tiempo para responder (s)"
                 name="lifetimeSeconds"
                 rules={[{ required: true, message: "Campo obligatorio" }]}>
                 <InputNumber placeholder="Tiempo para responder" step="1" min="1" />

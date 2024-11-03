@@ -19,7 +19,7 @@ const AllQuestinos = () => {
 
   const onChange = async (id: number, v: boolean) => {
     setLoading({ ...loading, [id]: true });
-    await contract.setVsibileQuestion(id, v);
+    await contract.setVisibleQuestion(id, v);
     getAllQuestion();
     setLoading({ ...loading, [id]: false });
   };
@@ -38,18 +38,24 @@ const AllQuestinos = () => {
                 <div key={`opt-${opt.id}`}>{`${opt.id} - ${opt.text}`}</div>
               ))}
             </div>
-            <div className={style.correct_answer}>{`Respuesta correcta: ${
-              item.options.find(opt => opt.id === item.correctAns)?.text
-            }`}</div>
-            <div className={style.question_time}>{`Tiempo para responder: ${item.lifetimeSeconds}`}</div>
+            <div className={style.correct_answer}>
+              <b>{"Respuesta correcta: "}</b>
+              {`${item.options.find(opt => opt.id === item.correctAns)?.text}`}
+            </div>
+            <div className={style.question_time}>
+              <b>{"Tiempo para responder: "}</b>
+              {`${item.lifetimeSeconds}s`}
+            </div>
           </div>
-          {isOnwer && <Switch
-            loading={loading[item.id]}
-            defaultChecked={item.visible}
-            onChange={v => {
-              onChange(item.id, v);
-            }}
-          />}
+          {isOnwer && (
+            <Switch
+              loading={loading[item.id]}
+              defaultChecked={item.visible}
+              onChange={v => {
+                onChange(item.id, v);
+              }}
+            />
+          )}
         </div>
       ))}
     </div>

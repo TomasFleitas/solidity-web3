@@ -6,9 +6,17 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract Quiz {
 
-    address private QUIZ_COIN_ADDRESS = 0xd9145CCE52D386f254917e481eB44e9943F39138;
+    address private QUIZ_COIN_ADDRESS;
     address private _owner;
     uint256 private Q_length;
+    QUIZ_COIN private coin;
+
+    // Token parameters
+    uint8 public SET_ADMIN_COST = 10;
+    uint8 public ANSWER_QUESTION_PROFITS = 1;
+    uint8 public ANSWER_QUESTION_LOSS = 1;
+    uint8 public CHANGE_NAME_COST = 5;
+    uint8 public CREATE_QUESTION_COST = 2;
 
     /**
     * eventType: "add_question_<id_question>"|"user_answer_<address>";
@@ -16,10 +24,10 @@ contract Quiz {
     event EmittedEvent(string eventType);
 
     struct Question{
-        uint id;
+        uint256 id;
         string text;
         string image;
-        uint lifetimeSeconds;
+        uint256 lifetimeSeconds;
         string[] options;
         string correctAns;
         bool visible;
@@ -32,8 +40,9 @@ contract Quiz {
     }
 
     struct Answer{
-       uint question_id;
+       uint256 question_id;
        string anwser_id; 
+       string correctAns;
     }
 
     struct UserCalification {
@@ -46,14 +55,15 @@ contract Quiz {
     mapping(address => Answer[]) private _answer;
     mapping(address => string) private _user_name;
     address[] private _users;
-    mapping(address => uint256) private _lastQuestion;
     address[] private _admins;
 
-    constructor(){
-         _owner = msg.sender;
-         _admins.push(_owner);
-         survey.title = "Sample Survey";
-         survey.image = "https://48tools.com/wp-content/uploads/2015/09/shortlink.png";
+    constructor(address _quiz_coin_address){
+        QUIZ_COIN_ADDRESS = _quiz_coin_address;
+        _owner = msg.sender;
+        _admins.push(_owner);
+        survey.title = "";
+        survey.image = "https://48tools.com/wp-content/uploads/2015/09/shortlink.png";
+        coin = QUIZ_COIN(QUIZ_COIN_ADDRESS);
     }
 
     modifier onlyAdmin{
@@ -80,12 +90,27 @@ contract Quiz {
         _;
     }
 
+
     ///// OWNER FUNCTION /////
 
-    function setVsibileQuestion(uint _id,bool _visible) onlyOwner public returns(bool){
+    // Set parameters
+    function setVisibleQuestion(
+        uint8 _SET_ADMIN_COST,
+        uint8 _ANSWER_QUESTION_PROFITS,
+        uint8 _ANSWER_QUESTION_LOSS,
+        uint8 _CHANGE_NAME_COST,
+        uint8 _CREATE_QUESTION_COST
+        ) onlyOwner public{
+        SET_ADMIN_COST = _SET_ADMIN_COST;
+        ANSWER_QUESTION_PROFITS=  _ANSWER_QUESTION_PROFITS;
+        ANSWER_QUESTION_LOSS = _ANSWER_QUESTION_LOSS;
+        CHANGE_NAME_COST=  _CHANGE_NAME_COST;
+        CREATE_QUESTION_COST=  _CREATE_QUESTION_COST;
+    }
+
+    function setVisibleQuestion(uint _id,bool _visible) onlyOwner public{
         require(_id< survey.question.length, "Id no valido");
         survey.question[_id].visible = _visible;
-        return true;
     }
 
     function deleteAdmin(address _admin) notAllowed(_admin) onlyOwner public{
@@ -111,6 +136,18 @@ contract Quiz {
 
     ///// COMMONT FUNCTINOS ////
 
+    function getAnswerByAccount(address _ad)  public view returns(Answer[] memory answers){
+        return _answer[_ad];
+    }
+
+    function getQuestionById(uint256 _question_id) public view returns(string memory, string[] memory){
+        return (survey.question[_question_id].text, survey.question[_question_id].options);
+    }
+
+    function getCoinAddress() public view returns(address QA){
+        return QUIZ_COIN_ADDRESS;
+    }
+
     function owner() public view returns(bool){
         return msg.sender == _owner;
     }
@@ -125,10 +162,6 @@ contract Quiz {
             }
         }
         return false;
-    }
-
-    function getUserName() public view returns(string memory name){
-        return _user_name[msg.sender];
     }
 
     function getUserNameByAccount(address _address) public view returns(string memory name){
@@ -156,6 +189,7 @@ contract Quiz {
     }
 
     function setAdmin() public{
+       require(coin.balanceOf(msg.sender) >= SET_ADMIN_COST, "Need more QUIZ_COIN");
        bool isSetted = false;
         for(uint i=0;i<_admins.length;i++){
             if(_admins[i] == msg.sender){
@@ -166,6 +200,7 @@ contract Quiz {
         if(!isSetted){
         _admins.push(msg.sender);
         }
+        coin.transferFrom(msg.sender,address(this), SET_ADMIN_COST);
         emit EmittedEvent(append("change_admin_",bytes20ToLiteralString(bytes20(msg.sender))));
     }
 
@@ -192,7 +227,8 @@ contract Quiz {
         return survey.question;
     }
     
-    function addQuestion(string memory text,string memory image,uint lifetimeSeconds , string[] memory opts, string memory correctAns) onlyAdmin public {   
+    function addQuestion(string memory text,string memory image,uint256 lifetimeSeconds , string[] memory opts, string memory correctAns) onlyAdmin public {   
+        require((msg.sender != _owner && coin.balanceOf(msg.sender) >= CREATE_QUESTION_COST) || msg.sender == _owner, "Need more QUIZ_COIN");
         Question[] storage qst =  survey.question;
         string memory auxCorrectAns;
         string[] memory auxOpts = new string[](opts.length);
@@ -203,24 +239,20 @@ contract Quiz {
             auxOpts[i] = append(append(Strings.toString(i),"_"),opts[i]);
         }
         qst.push(Question(Q_length,text,image,lifetimeSeconds,auxOpts,auxCorrectAns,msg.sender == _owner)); 
+        if(msg.sender != _owner){
+             coin.transferFrom(msg.sender,address(this),CREATE_QUESTION_COST);
+        }
         emit EmittedEvent(append("add_question_",Strings.toString(Q_length)));
         Q_length++;
     }
 
-    function getAnswerByAccount(address _address) onlyAdmin public view returns(Answer[] memory answers){
-        return _answer[_address];
-    }
 
     //// USER FUNCTIONS ////
 
-    function getMyAnswers() public view returns(Answer[] memory answers){
-        return _answer[msg.sender];
-    }
-
-    function answer(string memory _opts_id, uint _question_id) public {
+    function answer(string memory _opts_id, uint256 _question_id) public {
       
         bool exist = false;
-        for(uint i = 0; i < _users.length; i++){
+        for(uint256 i = 0; i < _users.length; i++){
             if(msg.sender ==  _users[i]){
                 exist = true;
                 break;
@@ -231,15 +263,20 @@ contract Quiz {
              _users.push(msg.sender);
         }
 
-        _answer[msg.sender].push(Answer(_question_id,_opts_id));
+        _answer[msg.sender].push(Answer(_question_id,_opts_id,getCorrectAns(_question_id)));
 
-        /* QUIZ_COIN coin = QUIZ_COIN(QUIZ_COIN_ADDRESS);
-        coin.transfer(msg.sender,1); */
-        
-        emit EmittedEvent(append("user_answer_",bytes20ToLiteralString(bytes20(msg.sender))));
+        if(isCorrectAnswer(_opts_id,_question_id)){
+            coin.transfer(msg.sender,ANSWER_QUESTION_PROFITS);
+            emit EmittedEvent(append("user_answer_correct_",bytes20ToLiteralString(bytes20(msg.sender))));
+        }else{
+            if(ANSWER_QUESTION_LOSS > 0){
+                coin.transferFrom(msg.sender, address(this),  (coin.balanceOf(msg.sender) >= ANSWER_QUESTION_LOSS ? ANSWER_QUESTION_LOSS : coin.balanceOf(msg.sender))); 
+            }
+            emit EmittedEvent(append("user_answer_wrong_",bytes20ToLiteralString(bytes20(msg.sender))));
+        }
     }
     
-    function getNextQuestion(uint nexId) public view returns(Question memory question){
+    function getNextQuestion(uint256 nexId) public view returns(Question memory question){
         require(nexId < survey.question.length, "Id no valido");
         if(nexId != 0 && !isAnswered(nexId)){
             if(survey.question[nexId].visible){
@@ -254,7 +291,9 @@ contract Quiz {
     }
 
     function setUserName(string memory _name) public {
+        require(coin.balanceOf(msg.sender) >= CHANGE_NAME_COST, "Need more QUIZ_COIN");
         _user_name[msg.sender] = _name;
+         coin.transferFrom(msg.sender,address(this), SET_ADMIN_COST);
         emit EmittedEvent(append("user_name_change_",bytes20ToLiteralString(bytes20(msg.sender))));
     }
 
@@ -283,6 +322,14 @@ contract Quiz {
 
     ///// Tools ////
 
+    function getCorrectAns(uint256 _question_id) internal view returns (string memory correctAns){
+        return survey.question[_question_id].correctAns;
+    }
+
+    function isCorrectAnswer(string memory _opts_id, uint256 _question_id) internal view returns (bool isCorrect){
+        return keccak256(abi.encodePacked(survey.question[_question_id].correctAns)) == keccak256(abi.encodePacked(_opts_id));
+    }
+
     function getNotAnsweredQuestion() internal view returns (Question memory qst){
         if(_answer[msg.sender].length == 0){
              return survey.question[0];
@@ -298,6 +345,7 @@ contract Quiz {
              if(!answered){
                  return survey.question[i];
              }
+             answered = false;
         }
     }
 

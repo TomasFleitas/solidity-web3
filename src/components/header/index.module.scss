@@ -5,11 +5,24 @@
   justify-content: space-between;
   padding: 10px;
 
+  .header_information {
+    p {
+      margin: 0;
+    }
+  }
+
   .account {
     margin: 0;
     cursor: pointer;
+    margin-right: 7%;
     &:hover {
       opacity: 0.8;
+    }
+  }
+
+  .buttons {
+    button {
+      cursor: pointer;
     }
   }
 }

@@ -1,15 +1,37 @@
 .clasifications {
   height: 98%;
   overflow: hidden auto;
-  background-color: red;
   .clasifications_head,
   .clasifications_item {
     height: fit-content;
     margin: 5px;
     padding: 5px;
   }
-  
+
+  .clasifications_head {
+    font-size: 1.3rem;
+  }
+
   .clasifications_item {
-    background-color: yellow;
+    /*    background-color: yellow; */
+  }
+}
+
+.clasifications_from_user {
+  height: 100%;
+  width: 100%;
+  padding: 20px;
+  .actual_position {
+    display: flex;
+    justify-content: center;
+    > div {
+      margin-left: 10px;
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+    font-size: 1.4rem;
+    color: var(--primary-color) !important;
+    text-align: center;
   }
 }
